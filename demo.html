@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ccheatmap - Terminal Activity Visualization</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'SF Pro Text', sans-serif;
+            background: #fafafa;
+            color: #5a6c7d;
+            line-height: 1.6;
+            padding: 2rem;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #e1e7ed;
+        }
+        
+        h1 {
+            color: #4a5f7a;
+            font-size: 1.875rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.025em;
+        }
+        
+        .subtitle {
+            color: #7a8a9a;
+            font-size: 1.125rem;
+            font-weight: 400;
+        }
+        
+        .terminal-wrapper {
+            background: #ffffff;
+            border: 1px solid #e1e7ed;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+        
+        .terminal-header {
+            background: #f7f9fb;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e1e7ed;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #dde3e9;
+        }
+        
+        .terminal-content {
+            padding: 1.5rem;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            background: #fbfcfd;
+        }
+        
+        .activity-title {
+            color: #4a5f7a;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .months-row {
+            color: #7a8a9a;
+            margin-bottom: 0.5rem;
+            padding-left: 3.5rem;
+        }
+        
+        .day-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.125rem;
+        }
+        
+        .day-label {
+            color: #8a9aaa;
+            width: 3rem;
+            font-size: 0.75rem;
+        }
+        
+        .squares {
+            display: flex;
+            gap: 0.25rem;
+        }
+        
+        .square {
+            width: 11px;
+            height: 11px;
+            border-radius: 2px;
+        }
+        
+        .intensity-0 { background: #ebedf0; }
+        .intensity-1 { background: #c7e3d0; }
+        .intensity-2 { background: #86cfa3; }
+        .intensity-3 { background: #4ab878; }
+        .intensity-4 { background: #2a9d5c; }
+        
+        .legend {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e1e7ed;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            color: #8a9aaa;
+        }
+        
+        .legend-squares {
+            display: flex;
+            gap: 0.25rem;
+            margin: 0 0.5rem;
+        }
+        
+        .stats {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e1e7ed;
+            font-size: 0.875rem;
+        }
+        
+        .stats-title {
+            color: #4a5f7a;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stats-row {
+            color: #7a8a9a;
+            margin-bottom: 0.25rem;
+        }
+        
+        .stats-label {
+            color: #5a7a9a;
+            font-weight: 500;
+        }
+        
+        .installation {
+            background: #f7f9fb;
+            border: 1px solid #e1e7ed;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .installation h2 {
+            color: #4a5f7a;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .code-block {
+            background: #ffffff;
+            border: 1px solid #e1e7ed;
+            border-radius: 0.25rem;
+            padding: 0.75rem 1rem;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+            font-size: 0.875rem;
+            color: #4a5f7a;
+            margin-bottom: 0.75rem;
+        }
+        
+        .footer {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e1e7ed;
+            text-align: center;
+            color: #8a9aaa;
+            font-size: 0.875rem;
+        }
+        
+        .footer a {
+            color: #5a7a9a;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s;
+        }
+        
+        .footer a:hover {
+            border-bottom-color: #5a7a9a;
+        }
+        
+        @media (max-width: 640px) {
+            body {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .terminal-content {
+                padding: 1rem;
+                font-size: 0.75rem;
+            }
+            
+            .square {
+                width: 9px;
+                height: 9px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ccheatmap</h1>
+            <p class="subtitle">Terminal-based GitHub-style contribution heatmap for Claude Code usage</p>
+        </div>
+        
+        <div class="terminal-wrapper">
+            <div class="terminal-header">
+                <div class="terminal-dot"></div>
+                <div class="terminal-dot"></div>
+                <div class="terminal-dot"></div>
+            </div>
+            <div class="terminal-content">
+                <div class="activity-title">Claude Code Activity - Sessions</div>
+                
+                <div class="months-row">6 7         8</div>
+                
+                <div class="day-row">
+                    <span class="day-label">Sun</span>
+                    <div class="squares">
+                        <div class="square intensity-0"></div>
+                        <div class="square intensity-0"></div>
+                        <div class="square intensity-0"></div>
+                        <div class="square intensity-1"></div>
+                        <div class="square intensity-0"></div>
+                        <div class="square intensity-0"></div>
+                        <div class="square intensity-2"></div>
+                        <div class="square intensity-1"></div>
+                        <div class="square intensity-3"></div>
+                        <div class="square intensity-4"></div>
+                        <div class="square intensity-2"></div>
+                    </div>
+                </div>
+                
+                <div class="day-row">
+                    <span class="day-label">Mon</span>
+                    <div class="squares">
+                        <div class="square intensity-1"></div>
+                        <div class="square intensity-2"></div>
+                        <div class="square intensity-3"></div>
+                        <div class="square intensity-4"></div>
+                        <div class="square intensity-4"></div>
+                        <div class="square intensity-3"></div>
+                        <div class="square intensity-4"></div>
+                        <div class="square intensity-2"></div>
+                        <div class="square intensity-3"></div>
+                        <div class="square intensity-4"></div>
+                        <div class="square intensity-3"></div>
+                    </div>
+                </div>
+                
+                <div class="day-row">
+                    <span class="day-label">Tue</span>
+                    <div class="squares">
+                        <div class="square intensity-2"></div>
+                        <div class="square intensity-1"></div>
+                        <div class="square intensity-4"></div>
+                        <div class="square intensity-3"></div>
+                        <div class="square intensity-3"></div>
+                        <div class="square intensity-4"></div>
+                        <div class="square intensity-2"></div>
+                        <div class="square intensity-4"></div>
+                        <div class="square intensity-3"></div>
+                        <div class="square intensity-2"></div>
+                        <div class="square intensity-4"></div>
+                    </div>
+                </div>
+                
+                <div class="day-row">
+                    <span class="day-label">Wed</span>
+                    <div class="squares">
+                        <div class="square intensity-1"></div>
+                        <div class="square intensity-3"></div>
+                        <div class="square intensity-2"></div>
+                        <div class="square intensity-4"></div>
+                        <div class="square intensity-3"></div>
+                        <div class="square intensity-3"></div>
+                        <div class="square intensity-4"></div>
+                        <div class="square intensity-2"></div>
+                        <div class="square intensity-4"></div>
+                        <div class="square intensity-3"></div>
+                        <div class="square intensity-0"></div>
+                    </div>
+                </div>
+                
+                <div class="day-row">
+                    <span class="day-label">Thu</span>
+                    <div class="squares">
+                        <div class="square intensity-3"></div>
+                        <div class="square intensity-2"></div>
+                        <div class="square intensity-4"></div>
+                        <div class="square intensity-3"></div>
+                        <div class="square intensity-4"></div>
+                        <div class="square intensity-2"></div>
+                        <div class="square intensity-3"></div>
+                        <div class="square intensity-4"></div>
+                        <div class="square intensity-2"></div>
+                        <div class="square intensity-4"></div>
+                        <div class="square intensity-0"></div>
+                    </div>
+                </div>
+                
+                <div class="day-row">
+                    <span class="day-label">Fri</span>
+                    <div class="squares">
+                        <div class="square intensity-2"></div>
+                        <div class="square intensity-4"></div>
+                        <div class="square intensity-3"></div>
+                        <div class="square intensity-2"></div>
+                        <div class="square intensity-4"></div>
+                        <div class="square intensity-3"></div>
+                        <div class="square intensity-4"></div>
+                        <div class="square intensity-2"></div>
+                        <div class="square intensity-3"></div>
+                        <div class="square intensity-4"></div>
+                        <div class="square intensity-0"></div>
+                    </div>
+                </div>
+                
+                <div class="day-row">
+                    <span class="day-label">Sat</span>
+                    <div class="squares">
+                        <div class="square intensity-0"></div>
+                        <div class="square intensity-0"></div>
+                        <div class="square intensity-0"></div>
+                        <div class="square intensity-0"></div>
+                        <div class="square intensity-0"></div>
+                        <div class="square intensity-1"></div>
+                        <div class="square intensity-2"></div>
+                        <div class="square intensity-1"></div>
+                        <div class="square intensity-2"></div>
+                        <div class="square intensity-1"></div>
+                        <div class="square intensity-0"></div>
+                    </div>
+                </div>
+                
+                <div class="legend">
+                    <span>Less</span>
+                    <div class="legend-squares">
+                        <div class="square intensity-0"></div>
+                        <div class="square intensity-1"></div>
+                        <div class="square intensity-2"></div>
+                        <div class="square intensity-3"></div>
+                        <div class="square intensity-4"></div>
+                    </div>
+                    <span>More</span>
+                </div>
+                
+                <div class="stats">
+                    <div class="stats-title">Statistics</div>
+                    <div class="stats-row">
+                        <span class="stats-label">Active:</span> 53 days &nbsp;&nbsp;
+                        <span class="stats-label">Streak:</span> 32/32 days
+                    </div>
+                    <div class="stats-row">
+                        <span class="stats-label">Total sessions:</span> 327 &nbsp;&nbsp;
+                        <span class="stats-label">Max:</span> 21 sessions/day
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="installation">
+            <h2>Installation</h2>
+            <div class="code-block">npm install -g ccheatmap</div>
+            <div class="code-block">npx ccheatmap</div>
+        </div>
+        
+        <div class="footer">
+            <p>Created by <a href="https://github.com/viveknair">Vivek Nair</a></p>
+            <p style="margin-top: 0.5rem;">
+                <a href="https://github.com/viveknair/ccheatmap">GitHub</a> · 
+                <a href="https://npmjs.com/package/ccheatmap">npm</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
