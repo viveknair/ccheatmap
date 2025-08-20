@@ -1,0 +1,43 @@
+{
+  "name": "ccheatmap",
+  "version": "1.0.0",
+  "description": "Terminal-based GitHub-style contribution heatmap for Claude Code usage",
+  "author": "Vivek",
+  "license": "MIT",
+  "bin": {
+    "ccheatmap": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsx src/index.ts",
+    "prepublishOnly": "npm run build",
+    "start": "node dist/index.js"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "heatmap",
+    "contribution",
+    "terminal",
+    "cli",
+    "visualization"
+  ],
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^12.0.0",
+    "date-fns": "^3.0.0"
+  }
+}
