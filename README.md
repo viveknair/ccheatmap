@@ -12,12 +12,6 @@ Terminal-based GitHub-style contribution heatmap for Claude Code usage.
 npx ccheatmap
 ```
 
-## Installation
-
-```bash
-npm install -g ccheatmap
-```
-
 ## Usage
 
 ```bash
