@@ -18,7 +18,7 @@ npx ccheatmap
 
 Watch it in action:
 
-[![asciicast](https://asciinema.org/a/8iFAvX66ihMEIIan4pa8ArwL1.svg)](https://asciinema.org/a/8iFAvX66ihMEIIan4pa8ArwL1)
+[![asciicast](https://asciinema.org/a/8iFAvX66ihMEIIan4pa8ArwL1.svg)](https://asciinema.org/a/8iFAvX66ihMEIIan4pa8ArwL1?autoplay=1)
 
 Or try it with sample data:
 
