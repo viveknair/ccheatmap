@@ -1,8 +1,8 @@
 {
   "name": "ccheatmap",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Terminal-based GitHub-style contribution heatmap for Claude Code usage",
-  "author": "Vivek",
+  "author": "Vivek Nair (vnair611@gmail.com)",
   "license": "MIT",
   "bin": {
     "ccheatmap": "./dist/index.js"
@@ -15,7 +15,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsdown",
     "dev": "tsx src/index.ts",
     "prepublishOnly": "npm run build",
     "start": "node dist/index.js"
@@ -31,7 +31,7 @@
   ],
   "devDependencies": {
     "@types/node": "^20.0.0",
-    "tsup": "^8.0.0",
+    "tsdown": "^0.14.1",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0"
   },

@@ -78,10 +78,6 @@ export class HeatmapRenderer {
     endDate: Date,
     metric: HeatmapMetric
   ): Cell[][] {
-    // Calculate the grid end date (end of current week)
-    const gridEndDate = startOfWeek(endDate, { weekStartsOn: 0 });
-    gridEndDate.setDate(gridEndDate.getDate() + 6); // End of week
-    
     // Get terminal width (default to 80 if not available)
     const terminalWidth = process.stdout.columns || 80;
     
@@ -89,22 +85,23 @@ export class HeatmapRenderer {
     // Each cell takes 2 chars (char + space), plus 4 for day labels
     const maxWeeksForWidth = Math.floor((terminalWidth - 4) / 2);
     
-    // Calculate number of weeks to show
-    const weeks = Math.ceil(differenceInWeeks(gridEndDate, startDate) + 1);
-    // Cap at 50 weeks to definitely avoid duplicate months, and respect terminal width
-    const weeksToShow = Math.min(weeks, 50, maxWeeksForWidth);
+    // Calculate the grid start date (beginning of week for startDate)
+    const gridStartDate = startOfWeek(startDate, { weekStartsOn: 0 });
     
-    // Calculate the actual start date based on weeks to show
-    const gridStartDate = new Date(gridEndDate);
-    gridStartDate.setDate(gridStartDate.getDate() - (weeksToShow * 7) + 1);
+    // Calculate the grid end date (end of week for endDate)
+    const gridEndDate = startOfWeek(endDate, { weekStartsOn: 0 });
+    gridEndDate.setDate(gridEndDate.getDate() + 6); // End of week
     
-    const grid: Cell[][] = [];
+    // Build all potential weeks first
+    const allWeeks: Cell[][] = [];
+    let currentWeekStart = new Date(gridStartDate);
     
-    for (let week = 0; week < weeksToShow; week++) {
+    while (currentWeekStart <= gridEndDate) {
       const weekCells: Cell[] = [];
+      let hasValidDay = false;
       
       for (let day = 0; day < 7; day++) {
-        const cellDate = addDays(gridStartDate, week * 7 + day);
+        const cellDate = addDays(currentWeekStart, day);
         const dateKey = cellDate.toISOString().split('T')[0];
         const activity = activityData.get(dateKey);
         
@@ -123,26 +120,50 @@ export class HeatmapRenderer {
           }
         }
         
-        // Only show cells up to today
-        if (cellDate > endDate) {
-          weekCells.push({
-            date: cellDate,
-            value: 0,
-            intensity: -1 // Mark as future date
-          });
-        } else {
+        // Check if this cell is within our date range
+        if (cellDate >= startDate && cellDate <= endDate) {
+          hasValidDay = true;
           weekCells.push({
             date: cellDate,
             value,
             intensity: 0
           });
+        } else if (cellDate > endDate) {
+          // Future date (part of the current week but after endDate)
+          // Still include it in the grid to maintain alignment
+          weekCells.push({
+            date: cellDate,
+            value: 0,
+            intensity: 0 // Show as empty square, not space
+          });
+        } else {
+          // Past date before our range
+          weekCells.push({
+            date: cellDate,
+            value: 0,
+            intensity: -1 // Mark as outside range (will show as space)
+          });
         }
       }
       
-      grid.push(weekCells);
+      // Only include weeks that have at least one valid day
+      if (hasValidDay) {
+        allWeeks.push(weekCells);
+      }
+      
+      // Move to next week
+      currentWeekStart = addDays(currentWeekStart, 7);
     }
     
-    return grid;
+    // Limit to terminal width and avoid month wraparound
+    const weeksToShow = Math.min(allWeeks.length, maxWeeksForWidth);
+    
+    // If we need to limit, take the most recent weeks
+    if (weeksToShow < allWeeks.length) {
+      return allWeeks.slice(allWeeks.length - weeksToShow);
+    }
+    
+    return allWeeks;
   }
 
   private calculateIntensityLevels(cells: Cell[][]): void {
@@ -188,30 +209,44 @@ export class HeatmapRenderer {
   private renderMonthLabels(cells: Cell[][]): string {
     // Start with padding for day labels (3 chars + space)
     let result = '    ';
-    let lastMonth = -1;
+    let lastSeenMonth = -1;
     
     for (let weekIdx = 0; weekIdx < cells.length; weekIdx++) {
       const week = cells[weekIdx];
       
-      // Check if any day in this week starts a new month
-      let foundNewMonth = false;
+      // Count valid days per month in this week
+      const monthCounts = new Map<number, number>();
       for (const cell of week) {
-        if (cell.intensity === -1) continue; // Skip future dates
-        
-        const month = cell.date.getMonth();
-        if (month !== lastMonth) {
-          // Found a new month starting in this column
-          const monthStr = String(month + 1);
-          result += monthStr;
-          lastMonth = month;
-          foundNewMonth = true;
-          break;
+        if (cell.intensity !== -1) {
+          const month = cell.date.getMonth();
+          monthCounts.set(month, (monthCounts.get(month) || 0) + 1);
         }
       }
       
-      if (!foundNewMonth) {
-        // No new month in this column, add space
+      if (monthCounts.size === 0) {
+        // No valid days in this week
         result += ' ';
+      } else {
+        // Find the dominant month (the one with most days)
+        let dominantMonth = -1;
+        let maxCount = 0;
+        
+        for (const [month, count] of monthCounts) {
+          if (count > maxCount) {
+            dominantMonth = month;
+            maxCount = count;
+          }
+        }
+        
+        // Only show month label if:
+        // 1. It's different from the last month we showed
+        // 2. This month has at least 4 days in this week (majority of week)
+        if (dominantMonth !== lastSeenMonth && maxCount >= 4) {
+          result += String(dominantMonth + 1);
+          lastSeenMonth = dominantMonth;
+        } else {
+          result += ' ';
+        }
       }
       
       // Add space to match grid spacing (cells are separated by spaces)
@@ -228,26 +263,36 @@ export class HeatmapRenderer {
     const lines: string[] = [];
     const today = new Date();
     
+    // Debug: log grid structure
+    if (process.env.DEBUG_GRID) {
+      console.error('Grid has', cells.length, 'weeks');
+      cells.forEach((week, weekIdx) => {
+        console.error(`Week ${weekIdx}:`);
+        week.forEach((cell, dayIdx) => {
+          console.error(`  ${dayLabels[dayIdx]}: intensity=${cell.intensity}, date=${cell.date.toISOString().split('T')[0]}`);
+        });
+      });
+    }
+    
     for (let day = 0; day < 7; day++) {
       const cells_str: string[] = [chalk.gray(dayLabels[day])];
       
       for (const week of cells) {
         const cell = week[day];
         
-        // Skip future dates
+        // Handle past dates before our range
         if (cell.intensity === -1) {
           cells_str.push(' ');
-          continue;
-        }
-        
-        const char = this.intensityChars[cell.intensity];
-        const color = this.intensityColors[cell.intensity];
-        
-        // Highlight today
-        if (isSameDay(cell.date, today)) {
-          cells_str.push(chalk.inverse(color(char)));
         } else {
-          cells_str.push(color(char));
+          const char = this.intensityChars[cell.intensity];
+          const color = this.intensityColors[cell.intensity];
+          
+          // Highlight today
+          if (isSameDay(cell.date, today)) {
+            cells_str.push(chalk.inverse(color(char)));
+          } else {
+            cells_str.push(color(char));
+          }
         }
       }
       
@@ -266,7 +311,8 @@ export class HeatmapRenderer {
     
     legend.push(' More');
     
-    return legend.join(' ');
+    // Add a blank line before the legend for better separation
+    return '\n' + legend.join(' ');
   }
 
   private renderStats(activityData: Map<string, any>, metric: HeatmapMetric): string {
@@ -327,11 +373,12 @@ export class HeatmapRenderer {
     
     longestStreak = Math.max(longestStreak, tempStreak);
     
+    const metricLabel = this.getMetricLabel(metric).toLowerCase();
     const stats = [
       '',
       chalk.bold('    Statistics:'),
       `    ${chalk.cyan('Active:')} ${totalDays} days  ${chalk.cyan('Streak:')} ${currentStreak}/${longestStreak} days`,
-      `    ${chalk.cyan('Total:')} ${this.formatNumber(totalValue)}  ${chalk.cyan('Max:')} ${this.formatNumber(maxValue)}/day`
+      `    ${chalk.cyan(`Total ${metricLabel}:`)} ${this.formatNumber(totalValue)}  ${chalk.cyan('Max:')} ${this.formatNumber(maxValue)} ${metricLabel}/day`
     ];
     
     return stats.join('\n');

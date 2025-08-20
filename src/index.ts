@@ -11,7 +11,8 @@ async function main() {
     .description('Terminal-based GitHub-style contribution heatmap for Claude Code usage')
     .version('1.0.0')
     .option('-m, --metric <type>', 'Metric to visualize: sessions, tokens, or interactions', 'sessions')
-    .option('-d, --days <number>', 'Number of days to show', '365')
+    .option('-d, --days <number>', 'Number of days to show', '60')
+    .option('--year', 'Show full year of activity (365 days)')
     .option('--no-legend', 'Hide the intensity legend')
     .option('--no-stats', 'Hide statistics')
     .option('--no-months', 'Hide month labels')
@@ -28,8 +29,8 @@ async function main() {
     process.exit(1);
   }
 
-  // Parse days
-  const days = parseInt(options.days);
+  // Parse days - if --year flag is set, use 365 days, otherwise use the provided value
+  let days = options.year ? 365 : parseInt(options.days);
   if (isNaN(days) || days < 1) {
     console.error(chalk.red('Days must be a positive number'));
     process.exit(1);
