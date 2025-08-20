@@ -184,7 +184,7 @@ console.log('━'.repeat(60) + '\n');
 
 // Run ccheatmap with the demo data
 const args = process.argv.slice(2);
-const ccheatmapPath = path.join(__dirname, 'dist', 'index.js');
+const ccheatmapPath = path.join(__dirname, '..', 'dist', 'index.js');
 
 // Check if built version exists
 if (!fs.existsSync(ccheatmapPath)) {

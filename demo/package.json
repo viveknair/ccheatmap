@@ -1,0 +1,10 @@
+{
+  "name": "ccheatmap-demo",
+  "version": "1.0.0",
+  "description": "Demo data generator and preview for ccheatmap",
+  "scripts": {
+    "start": "node generate.js",
+    "preview": "open index.html"
+  },
+  "private": true
+}

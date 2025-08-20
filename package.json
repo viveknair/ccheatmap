@@ -17,6 +17,7 @@
   "scripts": {
     "build": "tsdown",
     "dev": "tsx src/index.ts",
+    "demo": "npm run build && node demo/generate.js",
     "prepublishOnly": "npm run build",
     "start": "node dist/index.js"
   },

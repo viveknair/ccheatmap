@@ -16,7 +16,11 @@ npx ccheatmap
 
 ## Demo
 
-Try it with sample data:
+Watch it in action:
+
+[![asciicast](https://asciinema.org/a/8iFAvX66ihMEIIan4pa8ArwL1.svg)](https://asciinema.org/a/8iFAvX66ihMEIIan4pa8ArwL1)
+
+Or try it with sample data:
 
 ```bash
 # Clone the repo
@@ -26,7 +30,7 @@ cd ccheatmap
 # Run the demo
 npm install
 npm run build
-node demo.js
+node demo/generate.js
 ```
 
 ## Usage
