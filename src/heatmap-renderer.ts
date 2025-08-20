@@ -48,7 +48,7 @@ export class HeatmapRenderer {
     
     // Title
     output.push('');
-    output.push(chalk.bold.cyan(`    Claude Code Activity - ${this.getMetricLabel(options.metric)}`));
+    output.push(chalk.bold.cyan(`        Claude Code Activity - ${this.getMetricLabel(options.metric)}`));
     output.push('');
 
     // Month labels
@@ -207,8 +207,8 @@ export class HeatmapRenderer {
   }
 
   private renderMonthLabels(cells: Cell[][]): string {
-    // Start with padding for day labels (3 chars + space)
-    let result = '    ';
+    // Start with padding for day labels (7 chars + space for the new padding)
+    let result = '        ';
     let lastSeenMonth = -1;
     
     for (let weekIdx = 0; weekIdx < cells.length; weekIdx++) {
@@ -275,7 +275,8 @@ export class HeatmapRenderer {
     }
     
     for (let day = 0; day < 7; day++) {
-      const cells_str: string[] = [chalk.gray(dayLabels[day])];
+      // Add more padding before day labels
+      const cells_str: string[] = ['    ' + chalk.gray(dayLabels[day])];
       
       for (const week of cells) {
         const cell = week[day];
@@ -303,7 +304,7 @@ export class HeatmapRenderer {
   }
 
   private renderLegend(): string {
-    const legend = ['    Less '];
+    const legend = ['        Less '];
     
     for (let i = 0; i < this.intensityChars.length; i++) {
       legend.push(this.intensityColors[i](this.intensityChars[i]));
@@ -376,9 +377,9 @@ export class HeatmapRenderer {
     const metricLabel = this.getMetricLabel(metric).toLowerCase();
     const stats = [
       '',
-      chalk.bold('    Statistics:'),
-      `    ${chalk.cyan('Active:')} ${totalDays} days  ${chalk.cyan('Streak:')} ${currentStreak}/${longestStreak} days`,
-      `    ${chalk.cyan(`Total ${metricLabel}:`)} ${this.formatNumber(totalValue)}  ${chalk.cyan('Max:')} ${this.formatNumber(maxValue)} ${metricLabel}/day`
+      chalk.bold('        Statistics:'),
+      `        ${chalk.cyan('Active:')} ${totalDays} days  ${chalk.cyan('Streak:')} ${currentStreak}/${longestStreak} days`,
+      `        ${chalk.cyan(`Total ${metricLabel}:`)} ${this.formatNumber(totalValue)}  ${chalk.cyan('Max:')} ${this.formatNumber(maxValue)} ${metricLabel}/day`
     ];
     
     return stats.join('\n');

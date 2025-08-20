@@ -6,30 +6,47 @@ Terminal-based GitHub-style contribution heatmap for Claude Code usage.
 ![npm version](https://img.shields.io/npm/v/ccheatmap)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
+![ccheatmap screenshot](./images/ccheatmap.png)
+
 ## Quick Start
 
 ```bash
 npx ccheatmap
 ```
 
+## Demo
+
+Try it with sample data:
+
+```bash
+# Clone the repo
+git clone https://github.com/viveknair/ccheatmap.git
+cd ccheatmap
+
+# Run the demo
+npm install
+npm run build
+node demo.js
+```
+
 ## Usage
 
 ```bash
 # Show last 2 months (default)
-ccheatmap
+npx ccheatmap
 
 # Show full year
-ccheatmap --year
+npx ccheatmap --year
 
 # Show different metrics
-ccheatmap -m tokens
-ccheatmap -m interactions
+npx ccheatmap -m tokens
+npx ccheatmap -m interactions
 
 # Custom time range
-ccheatmap -d 30
+npx ccheatmap -d 30
 
 # Export as JSON
-ccheatmap --json > data.json
+npx ccheatmap --json > data.json
 ```
 
 ## Options

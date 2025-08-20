@@ -20,7 +20,7 @@ if (fs.existsSync(demoDir) && !fs.existsSync(backupDir)) {
 // Create fresh demo directory
 fs.mkdirSync(demoDir, { recursive: true });
 
-// Generate 4 months of realistic mock data
+// Generate 4 months of realistic mock data with varied intensity
 const generateMockData = () => {
   const data = [];
   const now = new Date();
@@ -29,76 +29,108 @@ const generateMockData = () => {
   for (let i = 119; i >= 0; i--) {
     const date = new Date(now);
     date.setDate(date.getDate() - i);
-    const dateStr = date.toISOString();
-    
-    // Create varying intensity patterns
-    let sessions = 0;
-    let interactions = 0;
-    let tokens = 0;
     
     const dayOfWeek = date.getDay();
     const dayOfMonth = date.getDate();
-    const monthNum = date.getMonth();
     
-    // Skip some weekends randomly (30% chance of weekend work)
-    if ((dayOfWeek === 0 || dayOfWeek === 6) && Math.random() > 0.3) {
-      continue;
-    }
+    // Determine activity level for this specific day
+    let activityLevel = 0;
     
-    // Create intensity patterns based on different factors
-    let baseLevel = 1;
-    
-    // Month-based patterns (simulate project phases)
-    const monthsAgo = Math.floor(i / 30);
-    switch(monthsAgo) {
-      case 3: // 3 months ago - light usage
-        baseLevel = 1.5;
-        break;
-      case 2: // 2 months ago - ramping up
-        baseLevel = 2.5;
-        break;
-      case 1: // 1 month ago - heavy usage (project sprint)
-        baseLevel = 4;
-        break;
-      case 0: // Current month - very active
-        baseLevel = 3.5;
-        break;
-    }
-    
-    // Weekly patterns (more activity mid-week)
-    if (dayOfWeek >= 2 && dayOfWeek <= 4) {
-      baseLevel *= 1.3;
-    }
-    
-    // Add some randomness
-    const randomFactor = 0.5 + Math.random();
-    baseLevel *= randomFactor;
-    
-    // Calculate activity based on patterns
+    // Weekday base activity (Monday = 1, Sunday = 0)
     if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-      // Weekdays
-      sessions = Math.max(1, Math.floor(Math.random() * 3 * baseLevel) + Math.floor(baseLevel));
-      interactions = Math.floor(Math.random() * 150 * baseLevel) + 50 * baseLevel;
-      tokens = Math.floor(Math.random() * 8000000 * baseLevel) + 2000000 * baseLevel;
+      // Weekdays: Always have some base activity
+      // Random number between 1-10 for base activity
+      activityLevel = Math.floor(Math.random() * 10) + 1;
+      
+      // Add weekday patterns
+      if (dayOfWeek === 1) {
+        // Monday: moderate (ramping up)
+        activityLevel *= 0.7;
+      } else if (dayOfWeek === 2 || dayOfWeek === 3) {
+        // Tuesday/Wednesday: highest activity
+        activityLevel *= 1.2;
+      } else if (dayOfWeek === 4) {
+        // Thursday: still high
+        activityLevel *= 1.1;
+      } else if (dayOfWeek === 5) {
+        // Friday: tapering off
+        activityLevel *= 0.6;
+      }
+      
+      // Add some random spikes and dips
+      const randomEvent = Math.random();
+      if (randomEvent < 0.1) {
+        // 10% chance of very busy day
+        activityLevel *= 2.5;
+      } else if (randomEvent < 0.2) {
+        // 10% chance of light day (meetings, etc)
+        activityLevel *= 0.3;
+      } else if (randomEvent < 0.4) {
+        // 20% chance of above average
+        activityLevel *= 1.5;
+      }
+      
+      // Time-based patterns (project phases)
+      if (i > 90) {
+        // 3+ months ago: lighter usage
+        activityLevel *= 0.4;
+      } else if (i > 60) {
+        // 2-3 months ago: ramping up
+        activityLevel *= 0.7;
+      } else if (i > 30) {
+        // 1-2 months ago: heavy usage (main project phase)
+        activityLevel *= 1.3;
+      } else if (i > 14) {
+        // 2-4 weeks ago: peak usage
+        activityLevel *= 1.5;
+      } else {
+        // Last 2 weeks: current activity
+        activityLevel *= 1.0;
+      }
+      
     } else {
-      // Weekends (when active)
-      sessions = Math.max(1, Math.floor(Math.random() * 2 * baseLevel));
-      interactions = Math.floor(Math.random() * 80 * baseLevel) + 20 * baseLevel;
-      tokens = Math.floor(Math.random() * 4000000 * baseLevel) + 1000000 * baseLevel;
+      // Weekends: Much lower activity
+      // 70% chance of no activity at all
+      if (Math.random() > 0.7) {
+        // 30% chance of weekend work
+        activityLevel = Math.floor(Math.random() * 3) + 1; // 1-3 base
+        
+        // Saturday slightly more likely to have activity than Sunday
+        if (dayOfWeek === 6) {
+          activityLevel *= 1.2;
+        } else {
+          activityLevel *= 0.8;
+        }
+        
+        // Weekend work is usually lighter
+        activityLevel *= 0.4;
+      }
     }
     
-    // Create some "burst" days (10% chance)
-    if (Math.random() > 0.9) {
-      sessions = Math.min(sessions * 2, 20);
-      interactions *= 2.5;
-      tokens *= 3;
+    // Vacation periods (specific date ranges with no activity)
+    const isVacation = (i >= 75 && i <= 78) || // About 2.5 months ago
+                      (i >= 42 && i <= 45);   // About 1.5 months ago
+    
+    if (isVacation) {
+      activityLevel = 0;
     }
+    
+    // Skip if no activity
+    if (activityLevel < 0.5) continue;
+    
+    // Convert activity level to actual metrics
+    // Sessions: 1-20 range based on activity
+    const sessions = Math.min(20, Math.max(1, Math.floor(activityLevel)));
+    
+    // Interactions and tokens scale with sessions
+    const interactions = Math.floor(sessions * (20 + Math.random() * 80));
+    const tokens = Math.floor(sessions * (1000000 + Math.random() * 5000000));
     
     // Generate session entries for this day
     for (let s = 0; s < sessions; s++) {
       const sessionId = `session-${date.toISOString().split('T')[0]}-${s}`;
       
-      // Distribute interactions and tokens across sessions
+      // Distribute interactions across the day
       const sessionInteractions = Math.ceil(interactions / sessions);
       const sessionTokens = Math.floor(tokens / sessions);
       
