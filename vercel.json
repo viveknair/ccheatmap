@@ -1,0 +1,8 @@
+{
+  "version": 2,
+  "buildCommand": "",
+  "outputDirectory": "demo",
+  "public": true,
+  "cleanUrls": true,
+  "trailingSlash": false
+}
